@@ -24,7 +24,9 @@ def naver_map_crawler(search_query):
             time.sleep(2)
             # store_elements = driver.find_elements(By.CLASS_NAME, "place_bluelink")  # 점포 정보 관련 태그
             store_elements = driver.find_elements(By.CLASS_NAME, "input_search")  # 점포 정보 관련 태그
+            print("store_element : ", store_elements)
             for store in store_elements:
+                print("store : ", store)
                 extract_store_info(store, driver, stores)
             move_next_page(driver)
     except Exception as e:
@@ -57,23 +59,30 @@ def set_chromedriver(options):
 
 def search(search_query, driver):
     """ 네이버 지도에서 검색 """
-    print("search() 시작")
+    print("🔎 search() 시작")
     try:
+        # ✅ 검색창을 더 정확하게 찾기 위해 CSS 선택자 사용
         search_box = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "input_search"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "input.input_search"))
         )
+        print("✅ 검색창 로딩 완료!")
+
         search_box.clear()  # ✅ 기존 검색어 제거
         search_box.send_keys(search_query)
         search_box.send_keys(Keys.ENTER)
+        print(f"🔍 검색어 입력 및 실행: {search_query}")
 
-        # ✅ 검색 결과가 로딩될 때까지 대기 (변경될 수 있음)
+        # ✅ 검색 결과가 로딩될 때까지 대기
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "place_bluelink"))
         )
-        print("검색 완료!")
+        print("✅ 검색 완료!")
 
     except Exception as e:
-        print("Search error:", e)
+        print("🚨 Search error:", e)
+        print("📌 현재 HTML 내용 일부 출력 (디버깅)")
+        print(driver.page_source[:1000])  # HTML 일부 출력하여 현재 페이지 확인
+
 
 
 
@@ -99,6 +108,8 @@ def extract_store_info(store, driver, stores):
         phone_elem = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.CLASS_NAME, "xlx7q65"))
         )
+        print("address_elem", address_elem)
+        print("phone_elem", phone_elem)
 
         address = address_elem.text if address_elem else "주소 없음"
         phone = phone_elem.text if phone_elem else "전화번호 없음"
@@ -112,6 +123,7 @@ def extract_store_info(store, driver, stores):
             "주소": address,
             "전화번호": phone
         })
+        print("extracted stores info", stores);
 
         driver.back()
         time.sleep(3)  # ✅ 기존 1초 → 3초로 증가
@@ -130,6 +142,7 @@ def move_next_page(driver):
         next_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CLASS_NAME, "fvwqf"))
         )
+        print("next_button", next_button)
         next_button.click()
     except Exception as e:
         print("No more pages available or error:", e)
